@@ -1,10 +1,7 @@
 import json
-from typing import Any, Dict
-
 import requests
-
+from typing import Any, Dict
 from .base_alerting import BaseAlerting
-
 
 class SlackAlerter(BaseAlerting):
     """Slack alerter for BuffaLogs impossible travel detection."""
@@ -69,13 +66,37 @@ class SlackAlerter(BaseAlerting):
         """Send alert to Slack channel."""
         try:
             message = self.format_message(alert_data)
-            response = requests.post(
-                self.webhook_url,
-                json=message,
-                headers={"Content-Type": "application/json"},
-            )
-            response.raise_for_status()
-            return True
+            response = self.send_slack_alert(self.channel, message)
+            if response == 200:
+                return True
+            else:
+                self.logger.error(f"Failed to send Slack alert with status code: {response}")
+                return False
         except Exception as e:
             self.logger.error(f"Failed to send Slack alert: {str(e)}")
             return False
+
+    def send_slack_alert(self, channel: str, message: Dict[str, Any]):
+        """
+        Send the formatted Slack alert message to a specified Slack channel.
+
+        Args:
+            channel (str): Slack channel name or ID (e.g., "#general").
+            message (dict): The formatted message to be sent to Slack.
+        
+        Returns:
+            status_code (int): HTTP status code returned by Slack API.
+        """
+        headers = {
+            'Authorization': f'Bearer {self.alert_config.get("slack_token")}',
+            'Content-Type': 'application/json'
+        }
+
+        payload = {
+            'channel': channel,
+            'text': message['blocks'][0]['text']['text'],  # Just sending the header text as fallback
+            'blocks': message['blocks']
+        }
+
+        response = requests.post(self.webhook_url, json=payload, headers=headers)
+        return response.status_code

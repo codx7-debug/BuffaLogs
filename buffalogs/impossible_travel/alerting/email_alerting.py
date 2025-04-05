@@ -35,6 +35,12 @@ class EmailAlerting(BaseAlerting):
         for key, value in email_settings.items():
             setattr(settings, key, value)
 
+    def send_email(self, subject, body):
+        """
+        Send the email to the recipients.
+        """
+        send_mail(subject, body, self.email_config.get("DEFAULT_FROM_EMAIL"), self.recipient_list)
+
     def notify_alerts(self):
         """
         Send email alerts for anomalies.
@@ -49,7 +55,7 @@ class EmailAlerting(BaseAlerting):
                 subject = f"Login Anomaly Alert: {alert.name}"
                 body = f"Dear user,\n\nAn unusual login activity has been detected:\n\n{alert.description}\n\nStay Safe,\nBuffalogs"
 
-                send_mail(subject, body, self.email_config.get("DEFAULT_FROM_EMAIL"), self.recipient_list)  # 1 if sent,0 if not
+                self.send_email(subject, body)  # Send email
                 self.logger.info(f"Email Alert Sent: {alert.name} to {self.recipient_list}")
                 alert.notified = True
                 alert.save()

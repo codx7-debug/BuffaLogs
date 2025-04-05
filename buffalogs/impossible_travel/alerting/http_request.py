@@ -304,3 +304,13 @@ class HTTPRequestAlerting(BaseAlerting):
         alerts = get_alerts(alert_types)
         self.logger.info(f"Sending alert to: {recipient_name}")
         self.send_alert(recipient_name, endpoint, alerts)
+
+
+
+
+def send_http_alert(url, payload):
+    response = requests.post(url, data=payload)
+    return response.status_code
+
+payload = {'message': 'Alert: Unusual Activity Detected'}
+send_http_alert('https://example.com/api/alert', payload)

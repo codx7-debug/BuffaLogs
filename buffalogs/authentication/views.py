@@ -6,7 +6,11 @@ from django.http import HttpResponsePermanentRedirect
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
+from alerting.email_alerting import send_email_alert
+from alerting.http_request import send_http_alert
+from alerting.slack_aleter import send_slack_alert # type: ignore
 from .serializers import LoginSerializer, LogoutSerializer, RegisterSerializer, UserSerializer
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +36,11 @@ class RegisterView(generics.GenericAPIView):
         user_data = serializer.data
         user = User.objects.get(email=user_data["email"])
 
+
+        send_email_alert('Alert: New User Registered', f"New user registered: {user.email}", ['admin@example.com'])
+        send_http_alert('https://example.com/api/alert', {'message': f'New user registered: {user.email}'})
+        send_slack_alert('#general', f'New user registered: {user.email}', 'your_slack_api_token')
+
         return Response(
             {
                 "status": "successful",
@@ -51,6 +60,10 @@ class LoginAPIView(generics.GenericAPIView):
         data = serializer.data
         data["username"] = serializer.validated_data["username"]
         return Response(data, status=status.HTTP_200_OK)
+    
+        send_email_alert('Alert: New User Registered', f"New user registered: {user.email}", ['admin@example.com'])
+        send_http_alert('https://example.com/api/alert', {'message': f'New user registered: {user.email}'})
+        send_slack_alert('#general', f'New user registered: {["user.email"]}', 'your_slack_api_token')
 
 
 class LogoutAPIView(generics.GenericAPIView):
@@ -62,6 +75,12 @@ class LogoutAPIView(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+
+
+        send_email_alert('Alert: New User Registered', f"New user registered: {User.email}", ['admin@example.com'])
+        send_http_alert('https://example.com/api/alert', {'message': f'New user registered: {User.email}'})
+        send_slack_alert('#general', f'New user registered: {User.email}', 'your_slack_api_token')
 
         return Response({"status": "successful"}, status=status.HTTP_200_OK)
 
